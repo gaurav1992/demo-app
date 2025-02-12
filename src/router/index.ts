@@ -75,7 +75,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/buildings',
     component: () => import('@/views/buildings/BuildingsPage.vue'),
-    beforeEnter: requireAuth
+    //beforeEnter: requireAuth
   },
   {
     path: '/locations',

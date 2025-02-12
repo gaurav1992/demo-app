@@ -1,88 +1,6 @@
-<!-- src/components/buildings/NewBuildingModal.vue -->
-<template>
-  <ion-modal :is-open="isOpen" @didDismiss="close">
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>New Building</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="close">
-            <ion-icon :icon="closeOutline"></ion-icon>
-          </ion-button>
-        </ion-buttons>
-      </ion-toolbar>
-    </ion-header>
-
-    <ion-content>
-      <form @submit.prevent="handleSubmit" class="form-content">
-        <ion-item>
-          <ion-label position="stacked">Building Name*</ion-label>
-          <ion-input 
-            v-model="formData.name"
-            required
-            placeholder="Enter building name"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Street Line 1*</ion-label>
-          <ion-input 
-            v-model="formData.streetLine1"
-            required
-            placeholder="Enter street address"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Street Line 2</ion-label>
-          <ion-input 
-            v-model="formData.streetLine2"
-            placeholder="Enter additional address info"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">City*</ion-label>
-          <ion-input 
-            v-model="formData.city"
-            required
-            placeholder="Enter city"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Postcode*</ion-label>
-          <ion-input 
-            v-model="formData.postcode"
-            required
-            placeholder="Enter postcode"
-          ></ion-input>
-        </ion-item>
-
-        <ion-item>
-          <ion-label position="stacked">Country*</ion-label>
-          <ion-select 
-            v-model="formData.country"
-            required
-            placeholder="Select country"
-          >
-            <ion-select-option v-for="country in countries" :key="country" :value="country">
-              {{ country }}
-            </ion-select-option>
-          </ion-select>
-        </ion-item>
-
-        <div class="form-actions">
-          <ion-button type="submit" expand="block">
-            Create Building
-          </ion-button>
-        </div>
-      </form>
-    </ion-content>
-  </ion-modal>
-</template>
-
+<!-- src/views/buildings/NewBuildingModal.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from 'vue';
 import {
   IonModal,
   IonHeader,
@@ -90,56 +8,62 @@ import {
   IonTitle,
   IonContent,
   IonButton,
-  IonButtons,
-  IonIcon,
   IonItem,
   IonLabel,
   IonInput,
-  IonSelect,
-  IonSelectOption
-} from '@ionic/vue'
-import { closeOutline } from 'ionicons/icons'
+} from '@ionic/vue';
 
-const props = defineProps<{
-  isOpen: boolean
-}>()
+defineProps<{
+  isOpen: boolean;
+}>();
 
-const emit = defineEmits(['close', 'save'])
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'save', data: { name: string; city: string; country: string }): void;
+}>();
 
 const formData = ref({
   name: '',
-  streetLine1: '',
-  streetLine2: '',
   city: '',
-  postcode: '',
-  country: ''
-})
+  country: '',
+});
 
-// Mock data (replace with actual data)
-const countries = ['United Kingdom', 'United States', 'Canada', 'Australia']
-
-const handleSubmit = () => {
-  emit('save', formData.value)
-  resetForm()
-  emit('close')
-}
-
-const resetForm = () => {
-  formData.value = {
-    name: '',
-    streetLine1: '',
-    streetLine2: '',
-    city: '',
-    postcode: '',
-    country: ''
-  }
-}
-
-const close = () => {
-  resetForm()
-  emit('close')
-}
+const handleSave = () => {
+  emit('save', { ...formData.value });
+  formData.value = { name: '', city: '', country: '' }; // Reset form
+};
 </script>
+
+<template>
+  <ion-modal :is-open="isOpen" @didDismiss="$emit('close')">
+    <ion-header>
+      <ion-toolbar>
+        <ion-title>New Building</ion-title>
+        <ion-buttons slot="end">
+          <ion-button @click="$emit('close')">Cancel</ion-button>
+        </ion-buttons>
+      </ion-toolbar>
+    </ion-header>
+    <ion-content class="ion-padding">
+      <ion-item>
+        <ion-label position="stacked">Name</ion-label>
+        <ion-input v-model="formData.name" required></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">City</ion-label>
+        <ion-input v-model="formData.city" required></ion-input>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Country</ion-label>
+        <ion-input v-model="formData.country" required></ion-input>
+      </ion-item>
+      <ion-button expand="block" @click="handleSave" class="ion-margin-top">
+        Save Building
+      </ion-button>
+    </ion-content>
+  </ion-modal>
+</template>
+
 
 <style scoped>
 .form-content {

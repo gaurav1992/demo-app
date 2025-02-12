@@ -1,131 +1,12 @@
-<template>
-    <div class="data-table-wrapper">
-      <!-- Search and Filter Section -->
-      <div class="search-filter-container">
-        <div class="search-row">
-          <ion-searchbar
-            :value="searchQuery"
-            :placeholder="searchPlaceholder"
-            @ionInput="handleSearch"
-          ></ion-searchbar>
-        </div>
-        
-        <div class="filters-row" v-if="filters.length > 0">
-          <div class="filters-group">
-            <ion-select
-              v-for="filter in filters"
-              :key="filter.key"
-              :value="activeFilters[filter.key]"
-              :placeholder="filter.placeholder"
-              @ionChange="(e) => handleFilterChange(filter.key, e)"
-              class="filter-select"
-            >
-              <ion-select-option 
-                v-for="option in filter.options" 
-                :key="option.value" 
-                :value="option.value"
-              >
-                {{ option.label }}
-              </ion-select-option>
-            </ion-select>
-          </div>
-  
-          <ion-button 
-            v-if="hasActiveFilters"
-            fill="clear"
-            @click="$emit('clear-filters')"
-            class="clear-button"
-          >
-            <ion-icon :icon="closeCircleOutline" slot="start"></ion-icon>
-            Clear
-          </ion-button>
-        </div>
-      </div>
-  
-      <!-- Table -->
-      <div class="table-container">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th 
-                v-for="column in columns" 
-                :key="column.key"
-                @click="column.sortable !== false && handleSort(column.key)"
-                :class="{ sortable: column.sortable !== false }"
-              >
-                {{ column.label }}
-                <ion-icon
-                  v-if="column.sortable !== false && sortColumn === column.key"
-                  :icon="sortDirection === 'asc' ? arrowUp : arrowDown"
-                  size="small"
-                ></ion-icon>
-              </th>
-              <th v-if="showActions" class="actions-column">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr 
-              v-for="item in safeItems" 
-              :key="item.id"
-              @click="$emit('row-click', item)"
-            >
-              <td v-for="column in columns" :key="column.key">
-                <slot :name="`column-${column.key}`" :item="item">
-                  {{ item[column.key] }}
-                </slot>
-              </td>
-              <td v-if="showActions" class="actions-cell">
-                <slot name="actions" :item="item">
-                  <ion-button 
-                    fill="clear"
-                    @click.stop="$emit('action-click', item)"
-                  >
-                    <ion-icon :icon="ellipsisVertical"></ion-icon>
-                  </ion-button>
-                </slot>
-              </td>
-            </tr>
-            <tr v-if="safeItems.length === 0">
-              <td :colspan="showActions ? columns.length + 1 : columns.length" class="no-data">
-                No data available
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-  
-      <!-- Pagination -->
-      <div class="pagination">
-        <ion-button 
-          fill="clear" 
-          :disabled="currentPage === 1"
-          @click="$emit('page-change', currentPage - 1)"
-        >
-          <ion-icon :icon="chevronBack"></ion-icon>
-        </ion-button>
-        
-        <span>Page {{ currentPage }} of {{ totalPages }}</span>
-        
-        <ion-button 
-          fill="clear" 
-          :disabled="currentPage === totalPages"
-          @click="$emit('page-change', currentPage + 1)"
-        >
-          <ion-icon :icon="chevronForward"></ion-icon>
-        </ion-button>
-      </div>
-    </div>
-  </template>
-
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 import {
   IonSearchbar,
   IonSelect,
   IonSelectOption,
   IonButton,
   IonIcon,
-} from '@ionic/vue'
+} from '@ionic/vue';
 import {
   arrowUp,
   arrowDown,
@@ -133,45 +14,23 @@ import {
   chevronForward,
   closeCircleOutline,
   ellipsisVertical,
-} from 'ionicons/icons'
-import { SearchbarCustomEvent, SelectCustomEvent } from '@ionic/vue'
-
-// Define interfaces for better type safety and reusability
-interface Column {
-  key: string
-  label: string
-  sortable?: boolean
-}
-
-interface FilterOption {
-  label: string
-  value: any
-}
-
-interface Filter {
-  key: string
-  placeholder: string
-  options: FilterOption[]
-}
-
-interface TableItem {
-  id: string | number
-  [key: string]: any
-}
+} from 'ionicons/icons';
+import type { SearchbarCustomEvent, SelectCustomEvent } from '@ionic/vue';
+import type { TableItem, Column, Filter } from '@/types/table';
 
 // Props interface
 interface Props {
-  columns: Column[]
-  items: TableItem[]
-  filters: Filter[]
-  activeFilters: Record<string, any>
-  searchQuery: string
-  currentPage: number
-  sortColumn: string
-  sortDirection: 'asc' | 'desc'
-  showActions?: boolean
-  searchPlaceholder?: string
-  itemsPerPage?: number
+  columns: Column[];
+  items: TableItem[];
+  filters: Filter[];
+  activeFilters: Record<string, any>;
+  searchQuery: string;
+  currentPage: number;
+  sortColumn: string;
+  sortDirection: 'asc' | 'desc';
+  showActions?: boolean;
+  searchPlaceholder?: string;
+  itemsPerPage?: number;
 }
 
 // Define props with defaults
@@ -179,48 +38,171 @@ const props = withDefaults(defineProps<Props>(), {
   itemsPerPage: 10,
   showActions: false,
   searchPlaceholder: 'Search...'
-})
+});
 
 // Computed properties
 const totalPages = computed(() => {
-  return Math.ceil(props.items.length / props.itemsPerPage)
-})
+  return Math.ceil(props.items.length / props.itemsPerPage);
+});
 
 const safeItems = computed((): TableItem[] => {
-  return props.items || []
-})
+  return props.items || [];
+});
 
 const hasActiveFilters = computed(() => {
-  return Object.values(props.activeFilters).some(value => value !== '') || props.searchQuery !== ''
-})
+  return Object.values(props.activeFilters).some(value => value !== '') || 
+         props.searchQuery !== '';
+});
 
-// Define emits
+// Define emits with type safety
 const emit = defineEmits<{
-  (e: 'search', value: string): void
-  (e: 'filter', key: string, value: any): void
-  (e: 'clear-filters'): void
-  (e: 'sort', column: string): void
-  (e: 'page-change', page: number): void
-  (e: 'row-click', item: TableItem): void
-  (e: 'action-click', item: TableItem): void
-}>()
+  (e: 'search', value: string): void;
+  (e: 'filter', key: string, value: any): void;
+  (e: 'clear-filters'): void;
+  (e: 'sort', column: string): void;
+  (e: 'page-change', page: number): void;
+  (e: 'row-click', item: TableItem): void;
+  (e: 'action-click', item: TableItem): void;
+}>();
 
 // Event handlers with proper typing
 const handleSearch = (event: SearchbarCustomEvent) => {
-  const value = event.detail.value
+  const value = event.detail.value;
   if (value !== undefined && value !== null) {
-    emit('search', value)
+    emit('search', value);
   }
-}
+};
 
 const handleFilterChange = (key: string, event: SelectCustomEvent) => {
-  emit('filter', key, event.detail.value)
-}
+  emit('filter', key, event.detail.value);
+};
 
 const handleSort = (column: string) => {
-  emit('sort', column)
-}
+  emit('sort', column);
+};
 </script>
+
+<template>
+  <div class="data-table-wrapper">
+    <!-- Search and Filter Section -->
+    <div class="search-filter-container">
+      <div class="search-row">
+        <ion-searchbar
+          :value="searchQuery"
+          :placeholder="searchPlaceholder"
+          @ionInput="handleSearch"
+        ></ion-searchbar>
+      </div>
+      
+      <div class="filters-row" v-if="filters.length > 0">
+        <div class="filters-group">
+          <ion-select
+            v-for="filter in filters"
+            :key="filter.key"
+            :value="activeFilters[filter.key]"
+            :placeholder="filter.placeholder"
+            @ionChange="(e) => handleFilterChange(filter.key, e)"
+            class="filter-select"
+          >
+            <ion-select-option 
+              v-for="option in filter.options"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </ion-select-option>
+          </ion-select>
+        </div>
+
+        <ion-button 
+          v-if="hasActiveFilters"
+          fill="clear"
+          @click="$emit('clear-filters')"
+          class="clear-button"
+        >
+          <ion-icon :icon="closeCircleOutline" slot="start"></ion-icon>
+          Clear
+        </ion-button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th 
+              v-for="column in columns"
+              :key="column.key"
+              @click="column.sortable !== false && handleSort(column.key)"
+              :class="{ sortable: column.sortable !== false }"
+            >
+              {{ column.label }}
+              <ion-icon
+                v-if="column.sortable !== false && sortColumn === column.key"
+                :icon="sortDirection === 'asc' ? arrowUp : arrowDown"
+                size="small"
+              ></ion-icon>
+            </th>
+            <th v-if="showActions" class="actions-column">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr 
+            v-for="item in safeItems"
+            :key="item.id"
+            @click="$emit('row-click', item)"
+          >
+            <td v-for="column in columns" :key="column.key">
+              <slot :name="`column-${column.key}`" :item="item">
+                {{ item[column.key] }}
+              </slot>
+            </td>
+            <td v-if="showActions" class="actions-cell">
+              <slot name="actions" :item="item">
+                <ion-button 
+                  fill="clear"
+                  @click.stop="$emit('action-click', item)"
+                >
+                  <ion-icon :icon="ellipsisVertical"></ion-icon>
+                </ion-button>
+              </slot>
+            </td>
+          </tr>
+          <tr v-if="safeItems.length === 0">
+            <td 
+              :colspan="showActions ? columns.length + 1 : columns.length" 
+              class="no-data"
+            >
+              No data available
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination">
+      <ion-button 
+        fill="clear"
+        :disabled="currentPage === 1"
+        @click="$emit('page-change', currentPage - 1)"
+      >
+        <ion-icon :icon="chevronBack"></ion-icon>
+      </ion-button>
+      
+      <span>Page {{ currentPage }} of {{ totalPages }}</span>
+      
+      <ion-button 
+        fill="clear"
+        :disabled="currentPage === totalPages"
+        @click="$emit('page-change', currentPage + 1)"
+      >
+        <ion-icon :icon="chevronForward"></ion-icon>
+      </ion-button>
+    </div>
+  </div>
+</template>
 
 <style scoped>
 .data-table-wrapper {
